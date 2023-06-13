@@ -106,7 +106,6 @@ df = data_types_conversion(df, date_columns=['Date'], bool_columns=['RainToday',
 #print(df.iloc[:10, [1, 5]])
 #print("Columns types: " + str(df.dtypes) + "\n")
 #print(df['RainTomorrows'].unique())
-#print(df.head())
 
 # NaN values check
 def nan_values_check(df):
@@ -130,107 +129,161 @@ def dummies_processing(df):
 # final preprocessing step
 X_numeric = df[['MinTemp', 'MaxTemp', 'Rainfall', 'WindSpeed9am', 'WindSpeed3pm', 'Humidity9am', 'Humidity3pm', 'Temp9am', 'Temp3pm', 'Pressure9am', 'Pressure3pm']]
 X_categoric = dummies_processing(df)
-print(X_categoric.head(3).to_string(index=False))
+#print(X_numeric.columns)
 
+# scale numeric data: zero mean & unitary standard deviation
 def scale_numeric_data(df, numeric_cols):
     scaler = StandardScaler()
     df_scaled = scaler.fit_transform(df[numeric_cols])
     df[numeric_cols] = df_scaled
     return df
+#X_numeric = scale_numeric_data(df, X_numeric.columns)
 
-# combine standardized numerical and categorical features
-#X = np.concatenate((X_numeric_scaled, X_categoric), axis=1)
-""" 
+# combine (standardized) numerical and categorical features
+#X = np.concatenate((X_numeric, X_categoric), axis=1) # no metadata, just 2 matrices
+X = pd.concat([X_numeric, X_categoric], axis=1)
+
 # PREDICTIVE MODEL
-# 1. DIVIDE DATASET IN TRAINING AND TEST PARTS
+# 1. DIVIDE DATASET IN INPUT AND TARGET VARIABLES
 y = df['RainTomorrow']
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+#X = X.drop(['Unnamed: 0', 'Date', 'Location', 'RainTomorrow', 'WindGustDir', 'WindDir9am', 'WindDir3pm'], axis=1)
+X = X.drop(['RainTomorrow'], axis=1)
+
+# SPLIT DATASET IN 80-20
+def split_df(X, y):
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=True, random_state=42)
+    return X_train, X_test, y_train, y_test
+X_train, X_test, y_train, y_test = split_df(X, y)
 
 # 2a. LOGISTIC REGRESSION
-# create an instance of the logistic regression model
-model = LogisticRegression()
-# fit the scaler and transform the training set
-scaler.fit(X_train)
-X_train_scaled = scaler.transform(X_train)
-# transform the test set using the same scaler
-X_test_scaled = scaler.transform(X_test)
-# train the model on the scaled training set
-model.fit(X_train_scaled, y_train)
-# evaluate the accuracy on the scaled test set
-accuracy = model.score(X_test_scaled, y_test)
-print("Logistic regression accuracy", accuracy)
+def logistic_regression_accuracy(X_train, X_test, y_train, y_test):
+    model = LogisticRegression()
+    model.fit(X_train, y_train)
+    accuracy = model.score(X_test, y_test)
+    return accuracy
+#print(logistic_regression_accuracy(X_train, X_test, y_train, y_test))
 
-""" # 2b. LOGISTIC REGRESSION WITH CROSS VALIDATION
+ # 2b. LOGISTIC REGRESSION WITH CROSS VALIDATION
 # K-fold cross-validation with 5 folds
-""" kfold = KFold(n_splits=5)
-model = LogisticRegression(max_iter=800)
-scores = cross_val_score(model, X, y, cv=kfold)
-print("Cross-validation scores:", scores)
-print("Mean cross-validation score:", np.mean(scores))
+def logistic_regression_kfold(X, y, n_splits=5, max_iter=800):
+    kfold = KFold(n_splits=n_splits, shuffle=True, random_state=42)
+    model = LogisticRegression(max_iter=max_iter)
+    scores = cross_val_score(model, X, y, cv=kfold)
+    mean_score = np.mean(scores)
+    return scores, mean_score
+# scores, mean_score = logistic_regression_kfold(X, y)
+# print("Cross-validation scores:", scores)
+# print("Mean cross-validation score:", mean_score)
+
 
 # 3a. DECISION TREE
-dt = DecisionTreeClassifier()
-dt.fit(X_train, y_train)
-accuracy = dt.score(X_test, y_test)
-print("Decision tree accuracy", accuracy)
+def decision_tree_accuracy(X_train, X_test, y_train, y_test):
+    dt = DecisionTreeClassifier()
+    dt.fit(X_train, y_train)
+    accuracy = dt.score(X_test, y_test)
+    return accuracy
+#print("Decision tree accuracy", decision_tree_accuracy(X_train, X_test, y_train, y_test))
+
 
 # 3b. DECISION TREE WITH CROSS VALIDATION
-dt = DecisionTreeClassifier()
-cv_scores = cross_val_score(dt, X, y, cv=5)
-print("CV scores:", cv_scores)
-print("Mean CV score:", cv_scores.mean())
+def decision_tree_kfold(X, y, n_splits=5, max_iter=800):
+    dt = DecisionTreeClassifier()
+    cv_scores = cross_val_score(dt, X, y, cv=5)
+    cv_scores_mean = cv_scores.mean()
+    return cv_scores, cv_scores_mean
+# cv_scores, cv_scores_mean = decision_tree_kfold(X, y)
+# print("CV scores:", cv_scores)
+# print("CV mean: ", cv_scores_mean)
+
 
 # 4a. RANDOM FOREST
-rf = RandomForestClassifier(n_estimators=100) # 100 trees
-rf.fit(X_train, y_train)
-y_pred = rf.predict(X_test)
-acc = accuracy_score(y_test, y_pred)
-print("Random forest accuracy:", acc)
+def random_forest_accuracy(X_train, X_test, y_train, y_test):
+    rf = RandomForestClassifier(n_estimators=100) # 100 trees
+    rf.fit(X_train, y_train)
+    y_pred = rf.predict(X_test)
+    acc = accuracy_score(y_test, y_pred)
+    return acc
+#print("Random forest accuracy:", random_forest_accuracy(X_train, X_test, y_train, y_test))
+
 
 # 4b. RANDOM FOREST WITH CROSS VALIDATION
-rf = RandomForestClassifier(n_estimators=100) # 100 trees
-rf.fit(X_train, y_train)
-cv_scores = cross_val_score(rf, X, y, cv=5)
-print("CV scores:", cv_scores)
-print("Mean CV score:", cv_scores.mean())
+def random_forest_kfold(X, y, n_splits=5):
+    rf = RandomForestClassifier(n_estimators=100) # 100 trees
+    kfold = KFold(n_splits=n_splits, shuffle=True, random_state=42)
+    cv_scores = cross_val_score(rf, X, y, cv=kfold)
+    cv_scores_mean = cv_scores.mean()
+    return cv_scores, cv_scores_mean
+# cv_scores, cv_scores_mean = random_forest_kfold(X, y)
+# print("CV scores:", cv_scores)
+# print("CV mean: ", cv_scores_mean)
+
 
 # 5a. SVM
-svm_model = svm.SVC(kernel='linear', C=1, random_state=42)
-svm_model.fit(X_train, y_train)
-y_pred = svm_model.predict(X_test)
-acc = accuracy_score(y_test, y_pred)
-print("SVM accuracy:", acc)
+def svm_accuracy(X_train, X_test, y_train, y_test):
+    svm_model = svm.SVC(kernel='linear', C=1, random_state=42)
+    svm_model.fit(X_train, y_train)
+    y_pred = svm_model.predict(X_test)
+    acc = accuracy_score(y_test, y_pred)
+    return acc
+#print("SVM accuracy:", svm_accuracy(X_train, X_test, y_train, y_test))
+
 
 # 5a. SVM WITH CROSS VALIDATION
-svm_model = svm.SVC(kernel='linear', C=1, random_state=42)
-svm_model.fit(X_train, y_train)
-cv_scores = cross_val_score(svm_model, X, y, cv=5)
-print("CV scores:", cv_scores)
-print("Mean CV score:", cv_scores.mean()) """ """
+def svm_kfold(X, y, n_splits=5):
+    svm_model = svm.SVC(kernel='linear', C=1, random_state=42)
+    svm_model.fit(X, y)
+    cv_scores = cross_val_score(svm_model, X, y, cv=5)
+    cv_scores_mean = cv_scores.mean()
+    return cv_scores, cv_scores_mean
+# cv_scores, cv_scores_mean = svm_kfold(X, y)
+# print("CV scores:", cv_scores)
+# print("Mean CV score:", cv_scores.mean())
+
 
 # EVALUATION METRICS
 # confusion matrix
-y_pred = model.predict(X_test)
-conf_matrix = confusion_matrix(y_test, y_pred)
-sns.heatmap(conf_matrix, annot=True, fmt='g', cmap='Blues')
-plt.xlabel('Predicted')
-plt.ylabel('True')
-plt.show()
+def plot_confusion_matrix(model, X_test, y_test):
+    y_pred = model.predict(X_test)
+    conf_matrix = confusion_matrix(y_test, y_pred)
+    sns.heatmap(conf_matrix, annot=True, fmt='g', cmap='Blues')
+    plt.xlabel('Predicted')
+    plt.ylabel('True')
+    plt.show()
+
 
 # precision
-precision = conf_matrix[1,1] / (conf_matrix[1,1] + conf_matrix[0,1])
-print("Precision: ", precision)
+def calculate_precision(model, X_test, y_test):
+    y_pred = model.predict(X_test)
+    conf_matrix = confusion_matrix(y_test, y_pred)
+    precision = conf_matrix[1,1] / (conf_matrix[1,1] + conf_matrix[0,1])
+    return precision
+
+# precision = calculate_precision(model, X_test, y_test)
+# print("Precision: ", precision)
 
 # recall
-recall = conf_matrix[1,1] / (conf_matrix[1,1] + conf_matrix[1,0])
-print("Recall: ", recall)
+def calculate_recall(model, X_test, y_test):
+    y_pred = model.predict(X_test)
+    conf_matrix = confusion_matrix(y_test, y_pred)
+    recall = conf_matrix[1,1] / (conf_matrix[1,1] + conf_matrix[1,0])
+    return recall
+
+# recall = calculate_recall(model, X_test, y_test)
+# print("Recall: ", recall)
 
 # AUC-ROC
-y_pred_prob = model.predict_proba(X_test_scaled)[:,1]
-auc_roc = roc_auc_score(y_test, y_pred_prob)
-print("AUC-ROC: ", auc_roc)
+def calculate_auc_roc(model, X_test, y_test):
+    y_pred_prob = model.predict_proba(X_test)[:,1]
+    auc_roc = roc_auc_score(y_test, y_pred_prob)
+    return auc_roc
 
-# learning curve
+# model = LogisticRegression()
+# model.fit(X_train, y_train)
+
+# auc_roc = calculate_auc_roc(model, X_test_scaled, y_test)
+# print("AUC-ROC: ", auc_roc)
+
+""" # learning curve
 train_sizes, train_scores, test_scores = learning_curve(
     estimator=model, X=X, y=y, cv=5, n_jobs=-1,
     train_sizes=np.linspace(0.1, 1.0, 10),
