@@ -37,11 +37,33 @@ categoric_cols = df.select_dtypes(include='object').columns.tolist()
 categoric_cols = pd.Index(categoric_cols).delete([0, 1])
 
 
+# Correlation matrix
+
+# In[16]:
+
+
+def plot_numeric_correlation(df, numeric_cols):
+    corr_matrix = df[numeric_cols].corr()
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(corr_matrix, annot=True, cmap='coolwarm')
+    plt.title("Correlation matrix")
+    plt.xticks(rotation=45)
+    plt.show()
+
+
+# In[17]:
+
+
+#df_numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+#df_numeric_cols.remove('Unnamed: 0')
+#plot_numeric_correlation(df, df_numeric_cols)
+
+
 # In[14]:
 
 
-print("Numeric columns: ", numeric_cols.columns)
-print("\nCategoric columns: ", categoric_cols)
+#print("Numeric columns: ", numeric_cols.columns)
+#print("\nCategoric columns: ", categoric_cols)
 
 
 # #### Missing and null data analysis
@@ -84,19 +106,19 @@ def nan_values_check(df):
 # In[74]:
 
 
-missing_numeric_data(df, numeric_cols)
+#missing_numeric_data(df, numeric_cols)
 
 
 # In[75]:
 
 
-missing_categoric_data(df, categoric_cols)
+#missing_categoric_data(df, categoric_cols)
 
 
 # In[76]:
 
 
-print(nan_values_check(df))
+#print(nan_values_check(df))
 
 
 # #### Data cleaning and reduction
@@ -135,7 +157,7 @@ def check_missing_values(df):
 
 
 df = remove_columns(df, ["Evaporation", "Sunshine", "RISK_MM"])
-print(df.columns)
+#print(df.columns)
 
 
 # In[79]:
@@ -146,7 +168,7 @@ df = fill_missing_values_with_mode(df, ["WindDir9am", "WindDir3pm"], "Location")
 df = fill_missing_values_with_mode(df, ["Cloud9am", "Cloud3pm", "WindGustSpeed", "Pressure9am", "Pressure3pm", "WindGustDir"])
 df = remove_rows_with_missing_values(df, ["RainToday"])
 
-print(check_missing_values(df))
+#print(check_missing_values(df))
 
 
 # In[83]:
@@ -183,7 +205,7 @@ def replace_outliers_with_mobile_mean(df, column_name, window_size, std_dev):
 # In[85]:
 
 
-plot_numeric_columns_boxplot(df)
+#plot_numeric_columns_boxplot(df)
 
 
 # In[86]:
@@ -226,7 +248,7 @@ df = data_types_conversion(df, date_columns=['Date'], bool_columns=['RainToday',
 #print("NaN: \n", nan_values_check(df))
 X_categoric = dummies_processing(df)
 X_numeric = df[['MinTemp', 'MaxTemp', 'Rainfall', 'WindSpeed9am', 'WindSpeed3pm', 'Humidity9am', 'Humidity3pm', 'Temp9am', 'Temp3pm', 'Pressure9am', 'Pressure3pm']]
-print(nan_values_check(X_categoric))
+#print(nan_values_check(X_categoric))
 
 
 # In[89]:
@@ -234,12 +256,30 @@ print(nan_values_check(X_categoric))
 
 # pre-processed dataframe
 X = pd.concat([X_numeric, X_categoric], axis=1)
-print(X.head())
+#print(X.head())
 
 
-# In[90]:
+
+# #### Columns selection
+# For the final dataset, only the most important and user-friendly columns are kept.
+
+# In[33]:
 
 
-# salva il dataframe in formato JSON
-X.to_json('ready_dataframe.json')
+X = X.loc[:, ['MinTemp', 'MaxTemp', 'Rainfall', 'WindSpeed9am', 'WindSpeed3pm', 'Humidity9am', 'Humidity3pm', 'RainToday', 'RainTomorrow']]
+
+
+# In[34]:
+
+
+X["Humidity"] = pd.concat([X["Humidity9am"], X["Humidity3pm"]], axis=1).mean(axis=1)
+X = X.drop(['Humidity9am', 'Humidity3pm'], axis=1)
+X["WindSpeed"] = pd.concat([X["WindSpeed9am"], X["WindSpeed3pm"]], axis=1).mean(axis=1)
+X = X.drop(['WindSpeed9am', 'WindSpeed3pm'], axis=1)
+
+
+# In[35]:
+
+
+print(X.columns)
 
