@@ -9,7 +9,7 @@ def run():
     # user parameters insertion
     MinTemp = st.number_input("Enter today's minimum temperature (°C):", format="%0.1f", help="Temperature in degrees Celsius")
     MaxTemp = st.number_input("Enter today's maximum temperature (°C):", format="%0.1f", help="Temperature in degrees Celsius")
-    RainToday = st.checkbox("Did it rain today?", ["Yes", "No"])
+    RainToday = st.checkbox("Did it rain today?")
     if RainToday:
         Rainfall = st.number_input("Enter the amount of rain today (mm):", format="%0.1f", help="Rainfall amount in millimeters")
     else:
