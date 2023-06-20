@@ -33,7 +33,7 @@ def run():
 
     # prediction
     if st.button("Generate forecast"):
-        prediction = model.predict([[MinTemp, MaxTemp, Rainfall, Humidity, WindSpeed, RainToday == "Yes"]])[0]
+        prediction = md.predict([[MinTemp, MaxTemp, Rainfall, Humidity, WindSpeed, RainToday == "Yes"]])[0]
         if prediction == 1:
             st.write("Yes, it might rain tomorrow.")
         else:
