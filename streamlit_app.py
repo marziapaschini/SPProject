@@ -1,7 +1,6 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import streamlit_user_data as stud
 import streamlit_visualise_data as stvd
 
