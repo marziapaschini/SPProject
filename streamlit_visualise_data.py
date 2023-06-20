@@ -17,7 +17,7 @@ def run():
         st.plotly_chart(fig)
 
     st.write("# Visualise data")
-    view_option = st.radio('Want do you want to see?', options=['Data overview', 'Histograms', 'Data for selected date', 'Maximum and minimum temperature', 'Line charts'])
+    view_option = st.radio('Want do you want to see?', options=['Data overview', 'Data details', 'Histograms', 'Data for selected date', 'Maximum and minimum temperature', 'Line charts'])
 
     if view_option == 'Data overview':
         st.write("The original dataset contains", df.shape[0], 'rows and', df.shape[1], 'columns.') 
@@ -27,6 +27,42 @@ def run():
         # Show pie chart for selected column
         column_option = st.selectbox('Select a column to show distribution', options=['Location', 'RainToday', 'RainTomorrow'])
         plot_pie_chart(df, column_option)
+    elif view_option == 'Data details':
+        data = {
+            'Column Name': ['Date', 'Location', 'MinTemp', 'MaxTemp', 'Rainfall', 'Evaporation',
+            'Sunshine', 'WindGustDir', 'WindGustSpeed', 'WindDir9am', 'WindDir3pm', 'WindSpeed9am',
+            'WindSpeed3pm', 'Humidity9am', 'Humidity3pm', 'Pressure9am', 'Pressure3pm', 'Cloud9am',
+            'Cloud3pm', 'Temp9am', 'Temp3pm', 'RainToday', 'RISK_MM', 'RainTomorrow'],
+            'Description': ["Data collection date.",
+            "Location of data collection.",
+            "Minimum temperature.",
+            "Maximum temperature.",
+            "Amount in millimeters of rainfall.",
+            "Amount in millimeters of the conversion between liquid water and water vapor.",
+            "Amount in hours per day of direct solar radiation received.",
+            "Direction of wind gusts.",
+            "Speed of wind gusts.",
+            "Direction of wind gusts at 9am.",
+            "Direction of wind gusts at 3pm.",
+            "Speed of wind gusts at 9am.",
+            "Speed of wind gusts at 3pm.",
+            "Humidity at 9am.",
+            "Humidity at 3pm.",
+            "Pressure at 9am.",
+            "Pressure at 3pm.",
+            "Cloud at 9am.",
+            "Cloud at 3pm.",
+            "Temperature at 9am.",
+            "Temperature at 3pm.",
+            "If it has rained that day.",
+            "Amount of rainfall in millimeters for the next day.",
+            "If it will rain the next day."]
+        }
+        # create columns dataframe
+        df = pd.DataFrame(data)
+        st.write("The collected data are:")
+        # show dataframe as table
+        st.table(df)
     elif view_option == 'Histograms':
         # Show histogram for selected column
         column_option = st.selectbox('Select a column to show distribution', options=['MinTemp', 'MaxTemp', 'Rainfall', 'Evaporation', 'Sunshine', 'WindGustSpeed', 'WindSpeed9am', 'WindSpeed3pm', 'Humidity9am', 'Humidity3pm', 'Pressure9am', 'Pressure3pm', 'Cloud9am', 'Cloud3pm'])
